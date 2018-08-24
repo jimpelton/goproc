@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 
+	"sum"
+
 	"golang.org/x/exp/mmap"
 )
 
@@ -19,6 +21,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	sumVolume(reader)
+	sum.SumVolume(reader)
 
 }

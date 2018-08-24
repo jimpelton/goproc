@@ -6,7 +6,7 @@ import (
 	"golang.org/x/exp/mmap"
 )
 
-func sumVolume(r *mmap.ReaderAt) {
+func SumVolume(r *mmap.ReaderAt) {
 	np := runtime.GOMAXPROCS(-1)
 	splits := r.Len() / np
 
