@@ -1,4 +1,4 @@
-package main
+package result
 
 type Result struct {
 	r chan interface{}

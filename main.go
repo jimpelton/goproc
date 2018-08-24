@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"sum"
+	"github.com/jimpelton/proc/internal/sum"
 
 	"golang.org/x/exp/mmap"
 )
@@ -20,7 +20,8 @@ func main() {
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}
+	fmt.Println("Opened: ", *rawFile, "Size: ", reader.Len())
 
-	sum.SumVolume(reader)
-
+	sum := sum.SumVolume(reader)
+	fmt.Println("total: ", sum)
 }
