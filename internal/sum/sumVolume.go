@@ -6,7 +6,7 @@ import (
 	"runtime"
 
 	"github.com/jimpelton/proc/internal/result"
-
+	"github.com/jimpelton/proc/pkg/volume"
 	"golang.org/x/exp/mmap"
 )
 
@@ -26,7 +26,7 @@ func SumVolume(r *mmap.ReaderAt) (sum float64) {
 	}
 
 	for _, res := range results {
-		sum += res.Wait().(float64)
+		sum += res.Wait().(volume.VolumeStats)
 	}
 
 	return
@@ -37,6 +37,8 @@ func runSum(r *mmap.ReaderAt,
 	var (
 		buf []byte
 		sum float64
+		min float64 = math.MaxFloat64
+		max float64 = math.MinFloat64
 	)
 	buf = make([]byte, int(math.Pow(2, 15)))
 	for start < end {
@@ -47,10 +49,18 @@ func runSum(r *mmap.ReaderAt,
 			}
 			break
 		}
-
 		start += n
+
 		for i := tidx; i < n; i += stride {
-			sum += float64(buf[i])
+			v := float64(buf[i])
+			sum += v
+
+			if v < min {
+				min = v
+			}
+			if v > max {
+				max = v
+			}
 		}
 
 		if err != nil {
@@ -58,7 +68,12 @@ func runSum(r *mmap.ReaderAt,
 			break
 		}
 	}
-	res.Done(sum)
+	res.Done(volume.VolumeStats{
+		Min:   min,
+		Max:   max,
+		Total: sum,
+		Avg:   0,
+	})
 	fmt.Println("Done.")
 }
 
