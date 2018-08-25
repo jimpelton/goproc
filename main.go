@@ -23,5 +23,5 @@ func main() {
 	fmt.Println("Opened: ", *rawFile, "Size: ", reader.Len())
 
 	sum := sum.SumVolume(reader)
-	fmt.Println("total: ", sum)
+	fmt.Printf("total: %f\n", sum)
 }
