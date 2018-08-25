@@ -20,9 +20,9 @@ func SumVolume(r *mmap.ReaderAt) (sum float64) {
 	results := make([]*result.Result, np)
 	for i, _ := range results {
 		results[i] = result.NewResult()
-		start := i
+		start := 0
 		end := r.Len()
-		go runSum(r, start, end, np, results[i] /*, progress*/)
+		go runSum(r, i, start, end, np, results[i] /*, progress*/)
 	}
 
 	for _, res := range results {
@@ -32,7 +32,8 @@ func SumVolume(r *mmap.ReaderAt) (sum float64) {
 	return
 }
 
-func runSum(r *mmap.ReaderAt, start int, end int, stride int, res *result.Result /*progress chan int*/) {
+func runSum(r *mmap.ReaderAt,
+	tidx, start, end, stride int, res *result.Result /*progress chan int*/) {
 	var (
 		buf []byte
 		sum float64
@@ -48,7 +49,7 @@ func runSum(r *mmap.ReaderAt, start int, end int, stride int, res *result.Result
 		}
 
 		start += n
-		for i := 0; i < n; i += stride {
+		for i := tidx; i < n; i += stride {
 			sum += float64(buf[i])
 		}
 
