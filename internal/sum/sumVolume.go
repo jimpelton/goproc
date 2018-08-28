@@ -10,7 +10,8 @@ import (
 	"golang.org/x/exp/mmap"
 )
 
-func SumVolume(r *mmap.ReaderAt) (sum float64) {
+// SumVolume computes the sum of elements in the volume and min, max, avg values.
+func SumVolume(r *mmap.ReaderAt) (stats volume.VolumeStats) {
 	np := runtime.GOMAXPROCS(-1)
 	//splits := r.Len() / np
 
@@ -25,9 +26,23 @@ func SumVolume(r *mmap.ReaderAt) (sum float64) {
 		go runSum(r, i, start, end, np, results[i] /*, progress*/)
 	}
 
+	stats.Min = math.MaxFloat64
+	stats.Max = -math.MaxFloat64
+
 	for _, res := range results {
-		sum += res.Wait().(volume.VolumeStats)
+		s := res.Wait().(volume.VolumeStats)
+
+		stats.Total += s.Total
+
+		if s.Min < stats.Min {
+			stats.Min = s.Min
+		}
+		if s.Max > stats.Max {
+			stats.Max = s.Max
+		}
 	}
+
+	stats.Average = stats.Total / float64(r.Len())
 
 	return
 }
@@ -38,7 +53,7 @@ func runSum(r *mmap.ReaderAt,
 		buf []byte
 		sum float64
 		min float64 = math.MaxFloat64
-		max float64 = math.MinFloat64
+		max float64 = -math.MaxFloat64
 	)
 	buf = make([]byte, int(math.Pow(2, 15)))
 	for start < end {
@@ -69,10 +84,10 @@ func runSum(r *mmap.ReaderAt,
 		}
 	}
 	res.Done(volume.VolumeStats{
-		Min:   min,
-		Max:   max,
-		Total: sum,
-		Avg:   0,
+		Min:     min,
+		Max:     max,
+		Total:   sum,
+		Average: 0,
 	})
 	fmt.Println("Done.")
 }
