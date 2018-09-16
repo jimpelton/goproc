@@ -1,8 +1,0 @@
-hash: 31dcba245a2825673756cce22dff83c4a5ad10827121580a2945d3c45bd7f82a
-updated: 2018-08-24T14:08:51.745777843-06:00
-imports:
-- name: golang.org/x/exp
-  version: 3d87b88a115fa4e65fadcbf34e6a60e8040cec41
-  subpackages:
-  - mmap
-testImports: []
