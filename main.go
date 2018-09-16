@@ -10,6 +10,11 @@ import (
 	"golang.org/x/exp/mmap"
 )
 
+func blockLevelAnalysis(reader *mmap.ReaderAt) {
+
+}
+
+
 func main() {
 	rawFile := flag.String("f", "", "Path to raw file")
 
@@ -24,4 +29,7 @@ func main() {
 
 	sum := sum.SumVolume(reader)
 	fmt.Printf("total: %f\n", sum)
+
+	blockLevelAnalysis(reader)
+
 }
