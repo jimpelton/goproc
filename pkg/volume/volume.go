@@ -16,7 +16,3 @@ type VolumeStats struct {
 	Average float64 `json:"average"`
 	Total   float64 `json:"total"`
 }
-
-func to1D(col, row, slab, maxCol, maxRow uint64) uint64 {
-	return col + maxCol*(row+maxRow*slab)
-}

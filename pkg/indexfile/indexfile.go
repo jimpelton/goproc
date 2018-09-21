@@ -68,7 +68,7 @@ func CreateFileBlocks(nblocks math.Vec3UI64, vol volume.Volume) (blocks []*FileB
 						},
 						Ijk:     math.Vec3UI64{i, j, k},
 						VoxDims: blkDimsVox,
-						Offset: to1D(startVoxel.X(), startVoxel.Y(), startVoxel.Z(),
+						Offset: math.To1D(startVoxel.X(), startVoxel.Y(), startVoxel.Z(),
 							vol.VoxDims.X(), vol.VoxDims.Y()) * vol.SzType,
 					})
 			}
