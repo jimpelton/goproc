@@ -27,8 +27,8 @@ func main() {
 	}
 	fmt.Println("Opened: ", *rawFile, "Size: ", reader.Len())
 
-	sum := sum.SumVolume(reader)
-	fmt.Printf("total: %f\n", sum)
+	sumtotal := sum.SumVolume(reader)
+	fmt.Printf("total: %f\n", sumtotal)
 
 	blockLevelAnalysis(reader)
 

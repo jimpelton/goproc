@@ -34,6 +34,7 @@ func NewIndexFileV1() *IndexFileV1 {
 	}
 }
 
+// A Block entry in the IndexFile.
 type FileBlock struct {
 	volume.Block
 	VoxDims math.Vec3UI64 `json:"dims"`   // voxel dimensions
@@ -41,16 +42,16 @@ type FileBlock struct {
 	Offset  uint64        `json:"offset"` // byte offset into file
 }
 
-// CreateVolumeBlocks creates blocks in world space within the given Volume
-func CreateFileBlocks(nblocks math.Vec3UI64, vol volume.Volume) (blocks []*FileBlock) {
+// CreateFileBlocks creates blocks in world space within the given Volume
+func CreateFileBlocks(nBlocks math.Vec3UI64, vol volume.Volume) (blocks []*FileBlock) {
 	blkDimsWld := vol.WorldDims.CompDiv(
-		mgl64.Vec3{float64(nblocks.X()), float64(nblocks.Y()), float64(nblocks.Z())})
+		mgl64.Vec3{float64(nBlocks.X()), float64(nBlocks.Y()), float64(nBlocks.Z())})
 
-	blkDimsVox := vol.VoxDims.CompDiv(nblocks)
+	blkDimsVox := vol.VoxDims.CompDiv(nBlocks)
 
-	for k := uint64(0); k < nblocks.Z(); k++ {
-		for j := uint64(0); j < nblocks.Y(); j++ {
-			for i := uint64(0); i < nblocks.X(); i++ {
+	for k := uint64(0); k < nBlocks.Z(); k++ {
+		for j := uint64(0); j < nBlocks.Y(); j++ {
+			for i := uint64(0); i < nBlocks.X(); i++ {
 				worldLoc := mgl64.Vec3{
 					vol.WorldDims.X()*float64(i) - 0.5,
 					vol.WorldDims.Y()*float64(j) - 0.5,
