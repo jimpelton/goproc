@@ -5,10 +5,10 @@ import (
 	"github.com/jimpelton/proc/pkg/math"
 	"github.com/jimpelton/proc/pkg/volume"
 )
+const magic = 7376
+const fileversion = 1
 
 type IndexFileHeader struct {
-	Magic       uint16    `json:"magic"`
-	FileVersion uint16    `json:"file_version"`
 	VolName     [256]byte `json:"vol_name"`
 	VolPath     [512]byte `json:"vol_path"`
 	TFuncName   [256]byte `json:"t_func_name"`
@@ -20,19 +20,14 @@ type IndexFileV1 struct {
 	Blocks []volume.Block `json:"blocks"`
 }
 
-func NewIndexFileV1() *IndexFileV1 {
-	return &IndexFileV1{
-		IndexFileHeader: IndexFileHeader{
-			Magic:       7376,
-			FileVersion: 1,
-			VolName:     [256]byte{},
-			VolPath:     [512]byte{},
-			TFuncName:   [256]byte{},
-		},
-		Volume: volume.Volume{},
-		Blocks: []volume.Block{},
-	}
-}
+// func NewIndexFileV1() *IndexFileV1 {
+// 	return &IndexFileV1{
+// 		IndexFileHeader: IndexFileHeader{
+// 		},
+// 		Volume: volume.Volume{},
+// 		Blocks: []volume.Block{},
+// 	}
+// }
 
 // A Block entry in the IndexFile.
 type FileBlock struct {

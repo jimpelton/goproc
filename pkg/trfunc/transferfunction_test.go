@@ -58,8 +58,11 @@ func TestTFOpacity_Interpolate(t *testing.T) {
 	})
 
 	t.Run("otf returns interpolated values", func (t *testing.T) {
+		// almostEqual := func(v1, v2 float64) bool {
 
-		assert.Equal(t, 0.7205882352, tf.Interpolate(0.755), "interpolated value not as expected")
+		// }
+		assert.Equal(t, 0.7205882352941175, tf.Interpolate(0.755), "interpolated value not as expected")
+
 		assert.Equal(t, 1.0, tf.Interpolate(0.55), "interpolated value not as expected")
 	})
 }

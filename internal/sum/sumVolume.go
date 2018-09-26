@@ -10,14 +10,9 @@ import (
 	"golang.org/x/exp/mmap"
 )
 
-// SumVolume computes the sum of elements in the volume and min, max, avg values.
-func SumVolume(r *mmap.ReaderAt) (stats volume.VolumeStats) {
+// VolumeAnalysis computes the sum of elements in the volume and min, max, avg values.
+func VolumeAnalysis(r *mmap.ReaderAt) (stats volume.VolumeStats) {
 	np := runtime.GOMAXPROCS(-1)
-	//splits := r.Len() / np
-
-	//progress := main(chan int, 10)
-	//go progressBar(progress, r.Len()*np)
-
 	results := make([]*result.Result, np)
 	for i, _ := range results {
 		results[i] = result.NewResult()
