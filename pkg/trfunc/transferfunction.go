@@ -60,13 +60,13 @@ func (tf *TFOpacity) Interpolate(v float64) float64 {
 		return 0.0
 	}
 
-	if v <= tf.knots[0].Alpha {
+	if v <= tf.knots[0].S {
 		return tf.knots[0].Alpha
 	}
 
 	maxIdx := len(tf.knots) - 1
 
-	if v >= tf.knots[maxIdx].Alpha {
+	if v >= tf.knots[maxIdx].S {
 		return tf.knots[maxIdx].Alpha
 	}
 

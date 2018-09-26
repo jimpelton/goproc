@@ -49,12 +49,12 @@ func TestTFOpacity_Interpolate(t *testing.T) {
 	}
 
 	t.Run("otf returns correct values on exact match", func(t *testing.T) {
-		assert.Equal(t, 0.0, tf.Interpolate(0.0), "interpolated value not as expected")
-		assert.Equal(t, 0.0, tf.Interpolate(0.16), "interpolated value not as expected")
-		assert.Equal(t, 1.0, tf.Interpolate(0.5), "interpolated value not as expected")
-		assert.Equal(t, 1.0, tf.Interpolate(0.66), "interpolated value not as expected")
-		assert.Equal(t, 0.50, tf.Interpolate(0.83), "interpolated value not as expected")
-		assert.Equal(t, 0.0, tf.Interpolate(1.0), "interpolated value not as expected")
+		assert.Equal(t, 0.0, tf.Interpolate(0.0), "exact value not as expected")
+		assert.Equal(t, 0.0, tf.Interpolate(0.16), "exact value not as expected")
+		assert.Equal(t, 1.0, tf.Interpolate(0.5), "exact value not as expected")
+		assert.Equal(t, 1.0, tf.Interpolate(0.66), "exact value not as expected")
+		assert.Equal(t, 0.50, tf.Interpolate(0.83), "exact value not as expected")
+		assert.Equal(t, 0.0, tf.Interpolate(1.0), "exact value not as expected")
 	})
 
 	t.Run("otf returns interpolated values", func (t *testing.T) {
