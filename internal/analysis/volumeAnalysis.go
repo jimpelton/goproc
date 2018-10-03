@@ -1,4 +1,4 @@
-package sum
+package analysis
 
 import (
 	"fmt"
@@ -8,6 +8,8 @@ import (
 	"github.com/jimpelton/proc/internal/result"
 	"github.com/jimpelton/proc/pkg/volume"
 	"golang.org/x/exp/mmap"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // VolumeAnalysis computes the sum of elements in the volume and min, max, avg values.
@@ -55,7 +57,7 @@ func runSum(r *mmap.ReaderAt,
 		n, err := fillBuf(r, int64(start), buf)
 		if n == 0 {
 			if err != nil {
-				fmt.Println("error:", err.Error())
+				log.Error("error:", err.Error())
 			}
 			break
 		}

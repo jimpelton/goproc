@@ -14,7 +14,6 @@ func blockLevelAnalysis(reader *mmap.ReaderAt) {
 
 }
 
-
 func main() {
 	rawFile := flag.String("f", "", "Path to raw file")
 
@@ -26,7 +25,7 @@ func main() {
 		os.Exit(1)
 	}
 	fmt.Println("Opened: ", *rawFile, "Size: ", reader.Len())
-	sumtotal := sum.VolumeAnalysis(reader)
+	sumtotal := analysis.VolumeAnalysis(reader)
 	fmt.Printf("total: %f\n", sumtotal)
 
 	blockLevelAnalysis(reader)
