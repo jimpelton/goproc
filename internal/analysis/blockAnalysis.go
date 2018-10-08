@@ -1,72 +1,98 @@
 package analysis
 
 import (
-	"github.com/jimpelton/proc/internal/result"
 	"github.com/jimpelton/proc/pkg/indexfile"
 	pmath "github.com/jimpelton/proc/pkg/math"
 	"github.com/jimpelton/proc/pkg/trfunc"
 	"github.com/jimpelton/proc/pkg/volume"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/exp/mmap"
-	"math"
+	"golang.org/x/text/encoding/internal/identifier"
+	"io"
 	"runtime"
 )
 
-type AnalyzedBlocks struct {
-	Blocks []*indexfile.FileBlock
-}
-
-//type Func func(buffer []byte, tidx, stride int) interface{}
-
 type Body interface {
-	F(buffer []byte, tidx, stride, end int) interface{}
+	// F is called by each goroutine and passed in the shared buffer.
+	F(Range)
+	// A Body must be able to copy itself -- each goroutine is given a copy
+	// of the body.
+	Copy() Body
 }
 
-type Args struct {
-	NBlocks pmath.Vec3UI64
-	Volume  volume.Volume
-	Body    Body
+// type Range interface {
+// 	At() int
+// 	Next() int
+// 	Begin() int
+// 	End() int
+//
+// 	setStride(int)
+// }
+
+type Range struct {
+	End int
+	Begin int
+	stride int
+	next int
 }
 
-func BlockAnalysis(r *mmap.ReaderAt, args Args) AnalyzedBlocks {
-	np := runtime.GOMAXPROCS(-1)
-	results := make([]*result.Result, np)
-	for i, _ := range results {
-		results[i] = result.NewResult()
-		start := 0
-		end := r.Len()
-		go runAnalysis(r, i, start, end, np, results[i], args)
+
+func (l *Range) Next() (n int) {
+	n = l.next
+	l.next += l.stride
+	return
+}
+
+func BlockAnalysis(rng *Range, b Body) Body {
+	stride := runtime.GOMAXPROCS(-1)
+	bodies := make([]Body, stride)
+	for i := range bodies {
+		bodies[i] = b.Copy()
 	}
 
-	// for _, res := range results {
+	rng.stride = stride
+	for i, b := range bodies {
+		r := *rng
+		r.Begin += tidx
+		go b.F(rng)
+	}
 
+	// combine results into b
+	// for _, b := range bodies {
+	//
 	// }
 
-	return AnalyzedBlocks{}
+	return b
 }
 
-func runAnalysis(r *mmap.ReaderAt, tidx, start, end, stride int, res *result.Result, args Args) {
-	bs := AnalyzedBlocks{Blocks: indexfile.CreateFileBlocks(args.NBlocks, args.Volume)}
-	var (
-		buf []byte
-	)
-	buf = make([]byte, int(math.Pow(2, 15)))
-	for start < end {
-		n, err := fillBuf(r, int64(start), buf)
-		if n == 0 {
-			if err != nil {
-				log.Error("error reading input file:", err.Error())
-			}
-			break
-		}
-		start += n
-		val := args.Body.F(buf, tidx, stride, end)
-	}
-}
+// runAnalysis reads r and fills a buffer with data. That buffer is processed by the Body.
+// func runAnalysis(tidx int, rng Range, b Body) {
+//
+// 	for rng.Begin < rng.End {
+//
+// 		n, err := fillBuf(r, int64(start), buf)
+//
+// 		if n == 0 {
+// 			if err != nil {
+// 				log.Error("error reading input file:", err.Error())
+// 			}
+// 			break
+// 		}
+//
+// 	}
+//
+// }
 
 type BlockRelevanceBody struct {
-	opacity  trfunc.TFOpacity
-	volStats volume.VolumeStats
+	Opacity  trfunc.TFOpacity
+	VolStats volume.VolumeStats
+	Blocks   []indexfile.FileBlock
+	VDims    pmath.Vec3UI64
+	BDims    pmath.Vec3UI64
+	BCount   pmath.Vec3UI64
+
+	reader io.ReaderAt
+
 	// needsNormalization is only true when the values in our data need to be
 	// normalized between 0 and 1 for use in the opacity transfer function's
 	// Interpolate function. If our data values are already between 0 and 1 this
@@ -74,15 +100,37 @@ type BlockRelevanceBody struct {
 	needsNormalization bool
 }
 
-func (b *BlockRelevanceBody) F(buf []byte, tidx, stride, end int) interface{} {
-	for i := tidx; i < end; i += stride {
-		v := float64(buf[i])
+func (b *BlockRelevanceBody) F(rng Range) {
+	buf := [1]byte{}
+
+	for i := rng.Begin; i < rng.End; i = rng.Next() {
+		// n, err := fillBuf(b.reader, int64(i), buf)
+		n, err := b.reader.ReadAt(buf[:], int64(i))
+		if n == 0 {
+			if err != nil {
+				log.Error("error reading input file:", err.Error())
+			}
+			break
+		}
+
+		v := float64(buf[0])
 		if b.needsNormalization {
-			v = UNorm(v, b.volStats.Min, b.volStats.Max)
+			v = UNorm(v, b.VolStats.Min, b.VolStats.Max)
+		}
+		rel := b.Opacity.Interpolate(v)
+
+		bI := (uint64(i) % b.VDims.X()) / b.BDims.X()
+		bJ := ((uint64(i) / b.VDims.X()) % b.VDims.Y()) / b.BDims.Y()
+		bK := ((uint64(i) / b.VDims.X()) / b.VDims.Y()) / b.BDims.Z()
+
+		// check block index is within block coverage
+		if bI < b.BCount.X() && bJ < b.BCount.Y() && bK < b.BCount.Z() {
+			bIdx := bI + b.BCount.X() * (bJ + bK * b.BCount.Y())
+			b.Blocks[bIdx].Rel += rel
 		}
 	}
-	return nil
 }
+
 
 // UNorm performs unity-based normalization.
 //
