@@ -14,6 +14,7 @@ import (
 // Lines in a transfer function consist of space separated (either space or tab) double-prec
 // values. splitReg is the regex that is used to split the lines.
 const splitReg = "[\\s\\t]+"
+
 var split *regexp.Regexp
 
 func init() {
@@ -38,7 +39,7 @@ func OpenTFOpacityFile(fileName string) (*TFOpacity, error) {
 		return nil, err
 	}
 
-	 tf := &TFOpacity{}
+	tf := &TFOpacity{}
 	if err := tf.readLines(f); err != nil {
 		return nil, err
 	}
@@ -76,25 +77,26 @@ func (tf *TFOpacity) Interpolate(v float64) float64 {
 
 	idx := int((v * float64(maxIdx)) + 0.5)
 	if idx > maxIdx {
-		k0 = tf.knots[maxIdx - 1]
+		k0 = tf.knots[maxIdx-1]
 		k1 = tf.knots[maxIdx]
 	} else if idx == 0 {
 		k0 = tf.knots[0]
 		k1 = tf.knots[1]
 	} else {
-		k0 = tf.knots[idx - 1]
+		k0 = tf.knots[idx-1]
 		k1 = tf.knots[idx]
 	}
 
 	d := (v - k0.S) / (k1.S - k0.S)
-	return k0.Alpha * (1.0 - d) + k1.Alpha* d
+	return k0.Alpha*(1.0-d) + k1.Alpha*d
 }
 
 func (tf *TFOpacity) readLines(r io.Reader) (err error) {
 	const maxLines = 32768
 
 	scan := bufio.NewScanner(r)
-	for i:=0; scan.Scan() && i < maxLines; i++ {
+	scan.Scan() // skip first line
+	for i := 0; scan.Scan() && i < maxLines; i++ {
 		line := scan.Text()
 		line = strings.TrimSpace(line)
 		if len(line) == 0 {
@@ -103,7 +105,7 @@ func (tf *TFOpacity) readLines(r io.Reader) (err error) {
 		if strings.HasPrefix(line, "#") {
 			continue
 		}
-		parts  := split.Split(line, 2)
+		parts := split.Split(line, 2)
 		k := TFOpacityKnot{}
 
 		if k.S, err = strconv.ParseFloat(parts[0], 64); err != nil {
@@ -125,10 +127,10 @@ type TFColor struct {
 }
 
 type TFColorKnot struct {
-	s       float64
+	s          float64
 	r, g, b, a float64
-
 }
+
 func OpenTFColorFile(file string) (*TFColor, error) {
 	return nil, nil
 }

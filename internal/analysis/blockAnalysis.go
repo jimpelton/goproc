@@ -5,9 +5,8 @@ import (
 	pmath "github.com/jimpelton/proc/pkg/math"
 	"github.com/jimpelton/proc/pkg/trfunc"
 	"github.com/jimpelton/proc/pkg/volume"
+
 	log "github.com/sirupsen/logrus"
-	"golang.org/x/exp/mmap"
-	"golang.org/x/text/encoding/internal/identifier"
 	"io"
 	"runtime"
 )
@@ -20,22 +19,12 @@ type Body interface {
 	Copy() Body
 }
 
-// type Range interface {
-// 	At() int
-// 	Next() int
-// 	Begin() int
-// 	End() int
-//
-// 	setStride(int)
-// }
-
 type Range struct {
-	End int
-	Begin int
+	End    int
+	Begin  int
 	stride int
-	next int
+	next   int
 }
-
 
 func (l *Range) Next() (n int) {
 	n = l.next
@@ -51,10 +40,10 @@ func BlockAnalysis(rng *Range, b Body) Body {
 	}
 
 	rng.stride = stride
-	for i, b := range bodies {
+	for tidx, b := range bodies {
 		r := *rng
 		r.Begin += tidx
-		go b.F(rng)
+		go b.F(*rng)
 	}
 
 	// combine results into b
@@ -65,24 +54,6 @@ func BlockAnalysis(rng *Range, b Body) Body {
 	return b
 }
 
-// runAnalysis reads r and fills a buffer with data. That buffer is processed by the Body.
-// func runAnalysis(tidx int, rng Range, b Body) {
-//
-// 	for rng.Begin < rng.End {
-//
-// 		n, err := fillBuf(r, int64(start), buf)
-//
-// 		if n == 0 {
-// 			if err != nil {
-// 				log.Error("error reading input file:", err.Error())
-// 			}
-// 			break
-// 		}
-//
-// 	}
-//
-// }
-
 type BlockRelevanceBody struct {
 	Opacity  trfunc.TFOpacity
 	VolStats volume.VolumeStats
@@ -91,21 +62,21 @@ type BlockRelevanceBody struct {
 	BDims    pmath.Vec3UI64
 	BCount   pmath.Vec3UI64
 
-	reader io.ReaderAt
+	Reader io.ReaderAt
 
-	// needsNormalization is only true when the values in our data need to be
+	// NeedsNormalization is only true when the values in our data need to be
 	// normalized between 0 and 1 for use in the opacity transfer function's
 	// Interpolate function. If our data values are already between 0 and 1 this
 	// should be false.
-	needsNormalization bool
+	NeedsNormalization bool
 }
 
 func (b *BlockRelevanceBody) F(rng Range) {
 	buf := [1]byte{}
 
 	for i := rng.Begin; i < rng.End; i = rng.Next() {
-		// n, err := fillBuf(b.reader, int64(i), buf)
-		n, err := b.reader.ReadAt(buf[:], int64(i))
+		// n, err := fillBuf(b.Reader, int64(i), buf)
+		n, err := b.Reader.ReadAt(buf[:], int64(i))
 		if n == 0 {
 			if err != nil {
 				log.Error("error reading input file:", err.Error())
@@ -114,7 +85,7 @@ func (b *BlockRelevanceBody) F(rng Range) {
 		}
 
 		v := float64(buf[0])
-		if b.needsNormalization {
+		if b.NeedsNormalization {
 			v = UNorm(v, b.VolStats.Min, b.VolStats.Max)
 		}
 		rel := b.Opacity.Interpolate(v)
@@ -125,12 +96,28 @@ func (b *BlockRelevanceBody) F(rng Range) {
 
 		// check block index is within block coverage
 		if bI < b.BCount.X() && bJ < b.BCount.Y() && bK < b.BCount.Z() {
-			bIdx := bI + b.BCount.X() * (bJ + bK * b.BCount.Y())
+			bIdx := bI + b.BCount.X()*(bJ+bK*b.BCount.Y())
 			b.Blocks[bIdx].Rel += rel
 		}
 	}
 }
 
+func (b *BlockRelevanceBody) Copy() Body {
+	rval := &BlockRelevanceBody{
+		Opacity:            b.Opacity,
+		VolStats:           b.VolStats,
+		VDims:              b.VDims,
+		BDims:              b.BDims,
+		BCount:             b.BCount,
+		NeedsNormalization: b.NeedsNormalization,
+		Reader:             b.Reader,
+	}
+
+	rval.Blocks = make([]indexfile.FileBlock, b.BCount.CompProduct())
+	copy(rval.Blocks, b.Blocks)
+
+	return rval
+}
 
 // UNorm performs unity-based normalization.
 //
