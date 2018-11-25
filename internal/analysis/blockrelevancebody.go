@@ -74,3 +74,9 @@ func (b *BlockRelevanceBody) Copy() Body {
 	return rval
 }
 
+func (b *BlockRelevanceBody) Join(other ParallelReduceBody) {
+	other_ := other.(*BlockRelevanceBody)
+	for i, blk := range other_.Blocks {
+		b.Blocks[i].Rel += blk.Rel
+	}
+}

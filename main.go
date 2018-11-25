@@ -70,7 +70,7 @@ func main() {
 	bd := vd.CompDiv(nb)
 
 	/*bod :=*/
-	analysis.BlockAnalysis(
+	analysis.ParallelReduce(
 		&analysis.Range{
 			Begin: 0,
 			End:   reader.Len(),

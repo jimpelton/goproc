@@ -7,3 +7,8 @@ type Body interface {
 	// of the body.
 	Copy() Body
 }
+
+type ParallelReduceBody interface {
+	Body
+	Join(body ParallelReduceBody)
+}
