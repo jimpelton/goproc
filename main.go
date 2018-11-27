@@ -69,8 +69,7 @@ func main() {
 		uint64(args.VolDims[2])}
 	bd := vd.CompDiv(nb)
 
-	/*bod :=*/
-	analysis.ParallelReduce(
+	bod := analysis.BlockLevelAnalysis(
 		&analysis.Range{
 			Begin: 0,
 			End:   reader.Len(),
@@ -86,6 +85,5 @@ func main() {
 			Reader:             reader,
 		})
 
-	// if bod, isBa := bod.(*analysis.BlockRelevanceBody); isBa {
-	// }
+
 }

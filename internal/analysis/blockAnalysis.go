@@ -2,43 +2,35 @@ package analysis
 
 import (
 	// log "github.com/sirupsen/logrus"
-	"math"
 	"runtime"
 )
 
 
-func ParallelReduce(rng *Range, b ParallelReduceBody) Body {
+func BlockLevelAnalysis(rng *Range, b *BlockRelevanceBody) *BlockRelevanceBody {
 	stride := runtime.GOMAXPROCS(-1)
 
-	bodies := make([]ParallelReduceBody, stride)
+	bodies := make([]*BlockRelevanceBody, stride)
 	wrappers := make([]*wrapper, stride)
 	c := make(chan ParallelReduceBody)
 	for i := range bodies {
-		bodies[i] = b.Copy().(ParallelReduceBody)
+		bodies[i] = b.Copy().(*BlockRelevanceBody)
 		wrappers[i] = NewWrapper(c)
 	}
 
 	rng.stride = stride
 	for tidx, b := range bodies {
-		// copy the range
 		r := *rng
 		r.Begin += tidx
 		go wrappers[tidx].run(b, &r)
 	}
 
-	for i := 0; i <= len(bodies); {
-		b1 := <-c
-		i++
-		b2 := <-c
-		i++
-		b1.Join(b2)
+	for _, w := range wrappers {
+		w.waitDone()
 	}
 
-	levels := math.Log2(float64(len(bodies)))
-	for lev := levels; lev >= 0; lev-- {
-		// combine results into b
-		for i := 0; i < len(bodies); i += 2 {
-
+	for _, bdone := range bodies {
+		for i, _ := range b.Blocks {
+			b.Blocks[i].Rel += bdone.Blocks[i].Rel
 		}
 	}
 
@@ -60,7 +52,7 @@ func (w *wrapper) run(b ParallelReduceBody, r *Range) {
 	w.c <- b
 }
 
-// func (w *wrapper) waitDone() {
-// 	w.wait.Wait()
-// }
+func (w *wrapper) waitDone() ParallelReduceBody {
+	return <-w.c
+}
 
