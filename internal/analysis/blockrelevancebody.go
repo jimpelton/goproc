@@ -17,7 +17,7 @@ type BlockRelevanceBody struct {
 	BDims    pmath.Vec3UI64
 	BCount   pmath.Vec3UI64
 
-	Reader io.ReaderAt
+	Reader io.ReaderAt `json:"-"`
 
 	// NeedsNormalization is only true when the values in our data need to be
 	// normalized between 0 and 1 for use in the opacity transfer function's
